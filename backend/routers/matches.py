@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from datetime import datetime
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from pydantic import BaseModel
 from database import get_db
 from models.match import Match
+from schemas.match import MatchRead
 
 router = APIRouter(prefix="/matches", tags=["matches"])
 
@@ -13,17 +14,30 @@ class MatchCreate(BaseModel):
     date: datetime
     stage: str
 
-@router.get("/")
-def get_matches(db: Session = Depends(get_db)): 
-    return db.query(Match).all()
+@router.get("/", response_model=list[MatchRead])
+def get_matches(
+        stage: str | None = None,
+    upcoming: bool = False, 
+    db: Session = Depends(get_db)): 
+    query = db.query(Match).options(
+    joinedload(Match.team_home),
+    joinedload(Match.team_away)
+)
+    if stage:
+        query = query.filter(Match.stage == stage)
+    if upcoming:
+        query = query.filter(Match.date > datetime.now())
+    return query.order_by(Match.date).all()
 
-@router.get("/{id}")
+@router.get("/{id}", response_model=MatchRead)
 def get_match(id: int, db: Session = Depends(get_db)):
-    match = db.query(Match).filter(Match.id == id).first()
+    match = db.query(Match).options(
+        joinedload(Match.team_home),
+        joinedload(Match.team_away)
+    ).filter(Match.id == id).first()
     if match is None:
         raise HTTPException(status_code=404, detail="Match not found")
     return match
-
 
 @router.post("/")
 def create_match(match: MatchCreate, db: Session = Depends(get_db)):
