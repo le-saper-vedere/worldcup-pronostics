@@ -1,8 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from pydantic import BaseModel
 from database import get_db
 from models.bet import Bet
+from models.match import Match
+from schemas.bet import BetRead
 
 router = APIRouter(prefix="/bets", tags=["bets"])
 
@@ -16,14 +18,22 @@ class BetCreate(BaseModel):
     predicted_winner: str | None = None
 
 
-@router.get("/")
+@router.get("/", response_model=list[BetRead])
 def get_bets(db: Session = Depends(get_db)):
-    return db.query(Bet).all()
+    return db.query(Bet).options(
+        joinedload(Bet.user),
+        joinedload(Bet.match).joinedload(Match.team_home),
+        joinedload(Bet.match).joinedload(Match.team_away),
+    ).all()
 
 
-@router.get("/{id}")
+@router.get("/{id}", response_model=BetRead)
 def get_bet(id: int, db: Session = Depends(get_db)):
-    bet = db.query(Bet).filter(Bet.id == id).first()
+    bet = db.query(Bet).options(
+        joinedload(Bet.user),
+        joinedload(Bet.match).joinedload(Match.team_home),
+        joinedload(Bet.match).joinedload(Match.team_away),
+    ).filter(Bet.id == id).first()
     if bet is None:
         raise HTTPException(status_code=404, detail="Bet not found")
     return bet
