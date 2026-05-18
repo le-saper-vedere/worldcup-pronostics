@@ -2,6 +2,7 @@
 import { useQuery } from '@tanstack/vue-query'
 import { api } from '@/services/api'
 import type { Match } from '@/types/match'
+import MatchCard from '@/components/MatchCard.vue'
 
 const {
   data: matches,
@@ -21,14 +22,8 @@ const {
     <p v-else-if="error" class="text-red-600">Error: {{ error.message }}</p>
 
     <ul v-else-if="matches" class="space-y-3">
-      <li
-        v-for="match in matches"
-        :key="match.id"
-        class="bg-white rounded-lg shadow p-4 flex items-center justify-between"
-      >
-        <span class="font-medium">{{ match.team_home.name }}</span>
-        <span class="text-gray-400 mx-4">vs</span>
-        <span class="font-medium">{{ match.team_away.name }}</span>
+      <li v-for="match in matches" :key="match.id">
+        <MatchCard :match="match" />
       </li>
     </ul>
   </div>

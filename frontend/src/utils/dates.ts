@@ -1,0 +1,6 @@
+export const formatTime = (dateStr: string): string => {
+  return new Date(dateStr).toLocaleTimeString('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
