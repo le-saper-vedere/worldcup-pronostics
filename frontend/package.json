@@ -17,6 +17,7 @@
     "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
+    "@nuxt/ui": "^4.7.1",
     "@tailwindcss/vite": "^4.2.4",
     "@tanstack/vue-query": "^5.100.9",
     "pinia": "^3.0.4",
