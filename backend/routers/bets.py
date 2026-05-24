@@ -68,6 +68,18 @@ def create_bet(bet: BetCreate, db: Session = Depends(get_db), current_user: User
     deadline = match.date - timedelta(hours=1)
     if datetime.now(timezone.utc) > deadline:
         raise HTTPException(status_code=400, detail="Betting deadline has passed")
+    existing_bet = db.query(Bet).filter(
+        Bet.user_id == current_user.id,
+        Bet.match_id == bet.match_id,
+        Bet.type == bet.type,
+    ).first()
+    if existing_bet:
+        existing_bet.predicted_home = bet.predicted_home
+        existing_bet.predicted_away = bet.predicted_away
+        existing_bet.predicted_winner = bet.predicted_winner
+        db.commit()
+        db.refresh(existing_bet)
+        return existing_bet
     new_bet = Bet(
         user_id=current_user.id,
         match_id=bet.match_id,
